@@ -1,6 +1,6 @@
 ---
 layout: archive
-title: "Experiment Report"
+title: "GS Performance"
 permalink: /experiment-report/
 author_profile: true
 redirect_from:
@@ -8,8 +8,6 @@ redirect_from:
 ---
 
 {% include base_path %}
-
-## Dataset
 
 ## Evaluation
 
