@@ -23,12 +23,12 @@ repository               : "cviss-lab/GS"
 #               Additional customization can be done by editing /_includes/author-profile.html
 author:
   # Biographic information
-  avatar           : "profile.png"
+  avatar           : "cviss_logo.jpg"
   name             : "CVISS Lab"
   pronouns         : # example: "she/her"  
-  bio              : "Short biography for the left-hand sidebar"
+  bio              : "Life is too short to learn everything."
   location         : "Earth"
-  employer         : "Red Brick University"
+  employer         : "University of Waterloo"
   uri              : # URL
   email            : "none@example.org" 
 
