@@ -13,7 +13,7 @@ redirect_from:
 
 ## Evaluation
 
-|scene|machine|image_root|downsample|PSNR↑|SSIM↑|LPIPS↓|resolution|gs|
+|scene|machine|image_root|downsample|PSNR↑|SSIM↑|LPIPS↓|resolution|#gs|
 |-|-|-|-|-|-|-|-|-|
 |**SAGA**|
 |tower_0529|docker-saga|Drone/Tower_0529$^{gs}$|8|26.67|0.9084|0.0800|654x490|4.97M|
