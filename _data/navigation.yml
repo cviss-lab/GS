@@ -31,3 +31,5 @@ main:
     
   - title: "Experiment Report"
     url: /experiment-report/
+  - title: "Experiment Chart"
+    url: /experiment-chart/

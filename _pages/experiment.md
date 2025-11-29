@@ -54,4 +54,4 @@ redirect_from:
 
 1. $data^{gs}$ Origianl GS procedure
 2. $data^{ns}$ NerfStudio procedure
-3. $d^3$ is the downsampling factor during training.
+3. $d^3$ is the downsampling factor during training.  
