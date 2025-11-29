@@ -31,13 +31,14 @@ redirect_from:
   const cols = Object.keys(colMap);
   
   function formatTime(secs) {
-      if (secs >= 3600) {
-          return `${Math.floor(secs/3600)}h ${Math.floor((secs%3600)/60)}m ${Math.round(secs%60)}s`;
-      }
-      if (secs >= 60) {
-          return `${Math.floor(secs/60)}m ${Math.round(secs%60)}s`;
-      }
-      return `${secs}s`;
+    if (!secs) return 'N/A';
+    if (secs >= 3600) {
+        return `${Math.floor(secs/3600)}h ${Math.floor((secs%3600)/60)}m ${Math.round(secs%60)}s`;
+    }
+    if (secs >= 60) {
+        return `${Math.floor(secs/60)}m ${Math.round(secs%60)}s`;
+    }
+    return `${secs}s`;
   }
 
   function parseHMS(val) {
