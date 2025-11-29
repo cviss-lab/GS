@@ -22,6 +22,8 @@ redirect_from:
 
 <div id="chart5" class="chart"></div>
 
+<div id="chart6" class="chart"></div>
+
 <script>
     var sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgRb1CWKFvn_Yx-AJucuj9uEk9Xblfepoyr2qRcjG8m-mL7mCeNm78Pv0QuMTlVuf6rGFBaPF0bfdD/pub?gid=0&single=true&output=csv';
 
@@ -223,6 +225,31 @@ Papa.parse(sheetUrl, {
       title: {text: '(d) PSNR vs Resolution (30k)', font: {size: 14}, x: 0.5},
       barmode: 'group',
       xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0}),
+      yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}})
+    }), plotConfig);
+
+    var traces6 = uniqueMethods.map(method => {
+      var methodData = data.filter(d => d.method === method);
+      return {
+        x: methodData.map(d => parseFloat(d.gs_number) || 0),
+        y: methodData.map(d => parseFloat(d.psnr_30k_train) || 0),
+        name: method,
+        type: 'scatter',
+        mode: 'markers',
+        marker: {
+          color: colorMap[method],
+          size: 10,
+          line: {color: '#000', width: 1}
+        }
+      };
+    });
+
+    Plotly.newPlot('chart6', traces6, Object.assign({}, layout_base, {
+      title: {text: '(e) GS Number vs PSNR (30k)', font: {size: 14}, x: 0.5},
+      xaxis: Object.assign({}, layout_base.xaxis, {
+        title: {text: 'GS Number', font: {size: 12}},
+        tickangle: 0
+      }),
       yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}})
     }), plotConfig);
   }
