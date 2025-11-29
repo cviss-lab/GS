@@ -237,6 +237,42 @@ Papa.parse(sheetUrl, {
     };
 
     var traces6 = [];
+    
+    // 先添加方法图例（圆形marker，不同颜色）
+    uniqueMethods.forEach((method, i) => {
+      traces6.push({
+        x: [null],
+        y: [null],
+        name: method,
+        legendgroup: 'methods',
+        type: 'scatter',
+        mode: 'markers',
+        marker: {
+          color: colorMap[method],
+          symbol: 'circle',
+          size: 10,
+          line: {color: '#000', width: 1}
+        }
+      });
+    });
+    
+    uniqueDownsampling.forEach((ds, i) => {
+      traces6.push({
+        x: [null],
+        y: [null],
+        name: '1/' + ds,
+        legendgroup: 'factors',
+        type: 'scatter',
+        mode: 'markers',
+        marker: {
+          color: '#666',
+          symbol: markerShapes[ds] || 'circle',
+          size: 10,
+          line: {color: '#000', width: 1}
+        }
+      });
+    });
+    
     uniqueMethods.forEach(method => {
       uniqueDownsampling.forEach(ds => {
         var methodData = data.filter(d => d.method === method && d.downsampling == ds);
@@ -244,9 +280,7 @@ Papa.parse(sheetUrl, {
         traces6.push({
           x: methodData.map(d => parseFloat(d.gs_number) || 0),
           y: methodData.map(d => parseFloat(d.psnr_30k_train) || 0),
-          name: method + ' (1/' + ds + ')',
-          legendgroup: method,
-          showlegend: ds == uniqueDownsampling[0],
+          showlegend: false,
           type: 'scatter',
           mode: 'markers',
           marker: {
