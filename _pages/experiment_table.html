@@ -1,0 +1,66 @@
+---
+layout: archive
+title: "GS Performance Table"
+permalink: /experiment-table/
+author_profile: true
+redirect_from:
+  - /resume
+---
+
+{% include base_path %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<div id="table-container" class="markdown-body"></div>
+
+<script>
+  const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgRb1CWKFvn_Yx-AJucuj9uEk9Xblfepoyr2qRcjG8m-mL7mCeNm78Pv0QuMTlVuf6rGFBaPF0bfdD/pub?gid=0&single=true&output=csv';
+  
+  const colMap = {
+      'method': 'Method',
+      'gpu': 'GPU',
+      'downsampling': 'Downsampling',
+      'psnr_30k_train': 'PSNR ↑',
+      'ssim_30k_train': 'SSIM ↑',
+      'lpips_30k_train': 'LPIPS ↓',
+      'gs_number': '# Gaussians',
+      'times': 'Time (s)'
+  };
+  
+  const cols = Object.keys(colMap);
+  
+  function formatTime(secs) {
+      if (secs >= 3600) {
+          return `${Math.floor(secs/3600)}h ${Math.floor((secs%3600)/60)}m ${Math.round(secs%60)}s`;
+      }
+      if (secs >= 60) {
+          return `${Math.floor(secs/60)}m ${Math.round(secs%60)}s`;
+      }
+      return `${secs}s`;
+  }
+
+  Papa.parse(sheetUrl, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+          const data = results.data;
+          data.forEach(d => {
+              d.times = formatTime(parseFloat(d.times) || 0);
+          });
+
+          let html = '<table><thead><tr>';
+          cols.forEach(c => html += `<th>${colMap[c]}</th>`);
+          html += '</tr></thead><tbody>';
+          data.forEach(d => {
+              html += '<tr>';
+              cols.forEach(c => html += `<td>${d[c] || ''}</td>`);
+              html += '</tr>';
+          });
+          html += '</tbody></table>';
+          
+          document.getElementById('table-container').innerHTML = html;
+      }
+  });
+</script>

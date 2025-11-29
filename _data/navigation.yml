@@ -30,6 +30,6 @@ main:
   #   url: /cv-json/
     
   - title: "Experiment Report"
-    url: /experiment-report/
+    url: /experiment-table/
   - title: "Experiment Chart"
     url: /experiment-chart/

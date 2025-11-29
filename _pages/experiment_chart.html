@@ -25,7 +25,7 @@ redirect_from:
 <div id="chart6" class="chart"></div>
 
 <script>
-    var sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgRb1CWKFvn_Yx-AJucuj9uEk9Xblfepoyr2qRcjG8m-mL7mCeNm78Pv0QuMTlVuf6rGFBaPF0bfdD/pub?gid=0&single=true&output=csv';
+var sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgRb1CWKFvn_Yx-AJucuj9uEk9Xblfepoyr2qRcjG8m-mL7mCeNm78Pv0QuMTlVuf6rGFBaPF0bfdD/pub?gid=0&single=true&output=csv';
 
 Papa.parse(sheetUrl, {
   download: true,
@@ -294,10 +294,7 @@ Papa.parse(sheetUrl, {
 
     Plotly.newPlot('chart6', traces6, Object.assign({}, layout_base, {
       title: {text: '(e) GS Number vs PSNR (30k)', font: {size: 14}, x: 0.5},
-      xaxis: Object.assign({}, layout_base.xaxis, {
-        title: {text: 'GS Number', font: {size: 12}},
-        tickangle: 0
-      }),
+      xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0}),
       yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}})
     }), plotConfig);
   }
