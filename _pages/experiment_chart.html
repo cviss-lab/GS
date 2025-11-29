@@ -72,7 +72,7 @@ Papa.parse(sheetUrl, {
       },
       paper_bgcolor: '#fff',
       plot_bgcolor: '#fff',
-      margin: {t: 60, b: 80, l: 70, r: 40},
+      margin: {t: 60, b: 80, l: 70, r: 100},
       xaxis: {
         showline: true,
         linewidth: 1.5,
@@ -121,10 +121,11 @@ Papa.parse(sheetUrl, {
     var traces1 = [];
     
     uniqueMethods.forEach((method, i) => {
-      var idx = methods.findIndex(m => m === method);
+      var row = data.find(d => d.method === method && d.downsampling == 8);
+      if (!row) return;
       traces1.push({
         x: [method],
-        y: [psnr_7k_train[idx]],
+        y: [parseFloat(row.psnr_7k_train) || 0],
         name: i === 0 ? '7k' : '',
         legendgroup: '7k',
         showlegend: i === 0,
@@ -134,7 +135,7 @@ Papa.parse(sheetUrl, {
       });
       traces1.push({
         x: [method],
-        y: [psnr_30k_train[idx]],
+        y: [parseFloat(row.psnr_30k_train) || 0],
         name: i === 0 ? '30k' : '',
         legendgroup: '30k',
         showlegend: i === 0,
@@ -145,7 +146,7 @@ Papa.parse(sheetUrl, {
     });
 
     Plotly.newPlot('chart1', traces1, Object.assign({}, layout_base, {
-      title: {text: '(a) Training Progress: 7k vs 30k', font: {size: 14}, x: 0.5},
+      title: {text: '(a) Training PSNR with Downsampling Factor 8: 7k vs 30k', font: {size: 14}, x: 0.5},
       barmode: 'group',
       xaxis: Object.assign({}, layout_base.xaxis, {}),
       yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
@@ -157,10 +158,10 @@ Papa.parse(sheetUrl, {
     var traces2 = [];
     
     uniqueMethods.forEach((method, i) => {
-      var idx = methods.findIndex(m => m === method);
+      var row = data.find(d => d.method === method && d.downsampling == 8);
       traces2.push({
         x: [method],
-        y: [psnr_30k_train[idx]],
+        y: [parseFloat(row.psnr_30k_train) || 0],
         name: i === 0 ? 'Train' : '',
         legendgroup: 'Train',
         showlegend: i === 0,
@@ -170,7 +171,7 @@ Papa.parse(sheetUrl, {
       });
       traces2.push({
         x: [method],
-        y: [psnr_30k_test[idx]],
+        y: [parseFloat(row.psnr_30k_test) || 0],
         name: i === 0 ? 'Test' : '',
         legendgroup: 'Test',
         showlegend: i === 0,
@@ -181,7 +182,7 @@ Papa.parse(sheetUrl, {
     });
 
     Plotly.newPlot('chart2', traces2, Object.assign({}, layout_base, {
-      title: {text: '(b) Train vs Test (30k)', font: {size: 14}, x: 0.5},
+      title: {text: '(b) PSNR with Downsampling Factor 8: Train vs Test (30k)', font: {size: 14}, x: 0.5},
       barmode: 'group',
       xaxis: Object.assign({}, layout_base.xaxis, {}),
       yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
@@ -228,20 +229,34 @@ Papa.parse(sheetUrl, {
       yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}})
     }), plotConfig);
 
-    var traces6 = uniqueMethods.map(method => {
-      var methodData = data.filter(d => d.method === method);
-      return {
-        x: methodData.map(d => parseFloat(d.gs_number) || 0),
-        y: methodData.map(d => parseFloat(d.psnr_30k_train) || 0),
-        name: method,
-        type: 'scatter',
-        mode: 'markers',
-        marker: {
-          color: colorMap[method],
-          size: 10,
-          line: {color: '#000', width: 1}
-        }
-      };
+    var markerShapes = {
+      '1': 'circle',
+      '2': 'square',
+      '4': 'diamond',
+      '8': 'cross'
+    };
+
+    var traces6 = [];
+    uniqueMethods.forEach(method => {
+      uniqueDownsampling.forEach(ds => {
+        var methodData = data.filter(d => d.method === method && d.downsampling == ds);
+        if (methodData.length === 0) return;
+        traces6.push({
+          x: methodData.map(d => parseFloat(d.gs_number) || 0),
+          y: methodData.map(d => parseFloat(d.psnr_30k_train) || 0),
+          name: method + ' (1/' + ds + ')',
+          legendgroup: method,
+          showlegend: ds == uniqueDownsampling[0],
+          type: 'scatter',
+          mode: 'markers',
+          marker: {
+            color: colorMap[method],
+            symbol: markerShapes[ds] || 'circle',
+            size: 10,
+            line: {color: '#000', width: 1}
+          }
+        });
+      });
     });
 
     Plotly.newPlot('chart6', traces6, Object.assign({}, layout_base, {
