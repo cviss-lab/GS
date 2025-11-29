@@ -266,7 +266,7 @@ Papa.parse(sheetUrl, {
         x: [null],
         y: [null],
         name: method,
-        legendgroup: 'methods',
+        legendgroup: method,
         type: 'scatter',
         mode: 'markers',
         marker: {
@@ -302,6 +302,7 @@ Papa.parse(sheetUrl, {
         traces6.push({
           x: methodData.map(d => parseFloat(d.gs_number) || 0),
           y: methodData.map(d => parseFloat(d.psnr_30k_train) || 0),
+          legendgroup: method,
           showlegend: false,
           type: 'scatter',
           mode: 'markers',
