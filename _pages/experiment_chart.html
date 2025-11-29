@@ -241,6 +241,7 @@ Papa.parse(sheetUrl, {
         y: yVals,
         name: method,
         type: 'bar',
+        hovertemplate: method + '<br>Factor: %{x}<br>PSNR: %{y:.2f} dB<extra></extra>',
         marker: Object.assign({color: colorMap[method]}, barStyle)
       };
     });
