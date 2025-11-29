@@ -223,7 +223,7 @@ Papa.parse(sheetUrl, {
       textposition: 'outside',
       textfont: {size: 9, color: '#333'}
     }], Object.assign({}, layout_base, {
-      title: {text: '(c) Training Time', font: {size: 14}, x: 0.5},
+      title: {text: '(c) Training Time with Downsampling Factor 8', font: {size: 14}, x: 0.5},
       showlegend: false,
       xaxis: Object.assign({}, layout_base.xaxis, {}),
       yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'Time (min)', font: {size: 12}}})
@@ -304,6 +304,7 @@ Papa.parse(sheetUrl, {
           y: methodData.map(d => parseFloat(d.psnr_30k_train) || 0),
           legendgroup: method,
           showlegend: false,
+          hovertemplate: method + ' (1/' + ds + ')<br>GS: %{x:.3s}<br>PSNR: %{y:.2f} dB<extra></extra>',
           type: 'scatter',
           mode: 'markers',
           marker: {
