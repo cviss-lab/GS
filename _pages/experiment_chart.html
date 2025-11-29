@@ -27,6 +27,28 @@ redirect_from:
 <script>
 var sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgRb1CWKFvn_Yx-AJucuj9uEk9Xblfepoyr2qRcjG8m-mL7mCeNm78Pv0QuMTlVuf6rGFBaPF0bfdD/pub?gid=0&single=true&output=csv';
 
+function formatTime(secs) {
+  if (!secs) return 'N/A';
+  if (secs >= 3600) {
+      return `${Math.floor(secs/3600)}h ${Math.floor((secs%3600)/60)}m ${Math.round(secs%60)}s`;
+  }
+  if (secs >= 60) {
+      return `${Math.floor(secs/60)}m ${Math.round(secs%60)}s`;
+  }
+  return `${secs}s`;
+}
+
+function parseHMS(val) {
+  const parts = String(val).split(':').map(Number);
+  if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  if (parts.length === 2) {
+      return parts[0] * 60 + parts[1];
+  }
+  return parseFloat(val) || 0;
+}
+
 Papa.parse(sheetUrl, {
   download: true,
   header: true,
@@ -53,7 +75,8 @@ Papa.parse(sheetUrl, {
 
     var methods = data.map(d => d.method);
     var gpu = data.map(d => d.gpu);
-    var times = data.map(d => parseFloat(d.times) || 0);
+    
+    var times = data.map(d => parseHMS(d.times));
     
     var psnr_7k_train = data.map(d => parseFloat(d.psnr_7k_train) || 0);
     var psnr_7k_test = data.map(d => parseFloat(d.psnr_7k_test) || 0);
