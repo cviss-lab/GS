@@ -27,7 +27,8 @@ redirect_from:
       'gs_number': '# Gaussians',
       'times': 'Time (hh:mm:ss)'
   };
-  
+  const siCols = ['gs_number'];
+  const numericCols = ['psnr_30k_train', 'ssim_30k_train', 'lpips_30k_train'];
   const cols = Object.keys(colMap);
   
   function formatTime(secs) {
@@ -39,6 +40,37 @@ redirect_from:
         return `${Math.floor(secs/60)}m ${Math.round(secs%60)}s`;
     }
     return `${secs}s`;
+  }
+
+  function formatSI(val) {
+    const num = parseFloat(val);
+    if (isNaN(num)) return val || '';
+    
+    const prefixes = [
+      { value: 1e12, symbol: 'T' },
+      { value: 1e9,  symbol: 'G' },
+      { value: 1e6,  symbol: 'M' },
+      { value: 1e3,  symbol: 'K' },
+      { value: 1,    symbol: '' },
+      { value: 1e-3, symbol: 'm' },
+      { value: 1e-6, symbol: 'μ' },
+      { value: 1e-9, symbol: 'n' }
+    ];
+    
+    const absNum = Math.abs(num);
+    for (const p of prefixes) {
+      if (absNum >= p.value) {
+        const scaled = num / p.value;
+        return parseFloat(scaled.toPrecision(3)) + p.symbol;
+      }
+    }
+    return parseFloat(num.toPrecision(3)).toString();
+  }
+  
+  function formatDecimal(val) {
+    const num = parseFloat(val);
+    if (isNaN(num)) return val || '';
+    return num.toFixed(3);
   }
 
   function parseHMS(val) {
@@ -66,9 +98,17 @@ redirect_from:
           cols.forEach(c => html += `<th>${colMap[c]}</th>`);
           html += '</tr></thead><tbody>';
           data.forEach(d => {
-              html += '<tr>';
-              cols.forEach(c => html += `<td>${d[c] || ''}</td>`);
-              html += '</tr>';
+            html += '<tr>';
+            cols.forEach(c => {
+              let val = d[c] || '';
+              if (siCols.includes(c) && val !== '') {
+                val = formatSI(val);
+              } else if (decimalCols.includes(c) && val !== '') {
+                val = formatDecimal(val);
+              }
+              html += `<td>${val}</td>`;
+            });
+            html += '</tr>';
           });
           html += '</tbody></table>';
           
