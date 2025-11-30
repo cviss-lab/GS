@@ -216,7 +216,7 @@ Papa.parse(sheetUrl, {
 
     Plotly.newPlot('chart4', [{
       x: uniqueMethods,
-      y: uniqueMethods.map(m => times[methods.findIndex(x => x === m)]),
+      y: uniqueMethods.map(m => times[methods.findIndex(x => x === m)] / 60),
       type: 'bar',
       marker: Object.assign({color: uniqueMethods.map(m => colorMap[m])}, barStyle),
       text: uniqueMethods.map(m => gpu[methods.findIndex(x => x === m)]),
