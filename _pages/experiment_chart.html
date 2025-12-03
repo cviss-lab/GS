@@ -27,6 +27,82 @@ redirect_from:
 <script>
 var sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgRb1CWKFvn_Yx-AJucuj9uEk9Xblfepoyr2qRcjG8m-mL7mCeNm78Pv0QuMTlVuf6rGFBaPF0bfdD/pub?gid=0&single=true&output=csv';
 
+function getCurrentTheme() {
+  const html = document.documentElement;
+  const body = document.body;
+  
+  if (html.classList.contains('dark') || 
+      body.classList.contains('dark') ||
+      html.getAttribute('data-theme') === 'dark' ||
+      body.getAttribute('data-theme') === 'dark') {
+    return 'dark';
+  }
+  return 'light';
+}
+
+function getThemedLayoutBase() {
+  const isDark = getCurrentTheme() === 'dark';
+  
+  return {
+    font: {
+      family: 'Times New Roman, serif',
+      size: 14,
+      color: isDark ? '#e0e0e0' : '#000'
+    },
+    paper_bgcolor: isDark ? '#1a1a1a' : '#fff',
+    plot_bgcolor: isDark ? '#2d2d2d' : '#fff',
+    margin: {t: 60, b: 80, l: 70, r: 100},
+    xaxis: {
+      showline: true,
+      linewidth: 1.5,
+      linecolor: isDark ? '#666' : '#000',
+      mirror: true,
+      ticks: 'outside',
+      tickwidth: 1,
+      tickcolor: isDark ? '#666' : '#000',
+      tickfont: {size: 11, color: isDark ? '#e0e0e0' : '#000'},
+      showgrid: false,
+      tickangle: -30
+    },
+    yaxis: {
+      showline: true,
+      linewidth: 1.5,
+      linecolor: isDark ? '#666' : '#000',
+      mirror: true,
+      ticks: 'outside',
+      tickwidth: 1,
+      tickcolor: isDark ? '#666' : '#000',
+      tickfont: {size: 11, color: isDark ? '#e0e0e0' : '#000'},
+      showgrid: true,
+      gridcolor: isDark ? '#444' : '#e0e0e0',
+      gridwidth: 0.5,
+      zeroline: false
+    },
+    legend: {
+      orientation: 'v',
+      yanchor: 'middle',
+      y: 0.5,
+      xanchor: 'left',
+      x: 1.02,
+      font: {size: 10, color: isDark ? '#e0e0e0' : '#000'},
+      bordercolor: isDark ? '#666' : '#ccc',
+      borderwidth: 1,
+      bgcolor: isDark ? 'rgba(26,26,26,0.9)' : 'rgba(255,255,255,0.9)'
+    },
+    bargap: 0.2,
+    bargroupgap: 0.1
+  };
+}
+
+function getThemedBarStyle() {
+  const isDark = getCurrentTheme() === 'dark';
+  return {
+    line: {color: isDark ? '#666' : '#000', width: 0.5}
+  };
+}
+
+
+
 function formatTime(secs) {
   if (!secs) return 'N/A';
   if (secs >= 3600) {
@@ -49,9 +125,203 @@ function parseHMS(val) {
   return parseFloat(val) || 0;
 }
 
+var globalData = null;
+
+function createAllCharts() {
+  if (!globalData) return;
+  
+  var data = globalData.data;
+  var uniqueMethods = globalData.uniqueMethods;
+  var colorMap = globalData.colorMap;
+  var colorMapLight = globalData.colorMapLight;
+  var methods = globalData.methods;
+  var gpu = globalData.gpu;
+  var times = globalData.times;
+  var uniqueDownsampling = globalData.uniqueDownsampling;
+  var markerShapes = globalData.markerShapes;
+  
+  var layout_base = getThemedLayoutBase();
+  var barStyle = getThemedBarStyle();
+  var plotConfig = {displayModeBar: false};
+
+  var traces1 = [];
+  uniqueMethods.forEach((method, i) => {
+    var row = data.find(d => d.method === method && d.downsampling == 8);
+    if (!row) return;
+    traces1.push({
+      x: [method],
+      y: [parseFloat(row.psnr_7k_train) || 0],
+      name: i === 0 ? '7k' : '',
+      legendgroup: '7k',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMapLight[method], line: barStyle.line},
+      offsetgroup: '7k'
+    });
+    traces1.push({
+      x: [method],
+      y: [parseFloat(row.psnr_30k_train) || 0],
+      name: i === 0 ? '30k' : '',
+      legendgroup: '30k',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMap[method], line: barStyle.line},
+      offsetgroup: '30k'
+    });
+  });
+
+  Plotly.newPlot('chart1', traces1, Object.assign({}, layout_base, {
+    title: {text: '(a) Training PSNR with Downsampling Factor 8: 7k vs 30k', font: {size: 14}, x: 0.5},
+    barmode: 'group',
+    xaxis: Object.assign({}, layout_base.xaxis, {}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
+    legend: Object.assign({}, layout_base.legend, {
+      traceorder: 'grouped'
+    })
+  }), plotConfig);
+
+  var traces2 = [];
+  uniqueMethods.forEach((method, i) => {
+    var row = data.find(d => d.method === method && d.downsampling == 8);
+    traces2.push({
+      x: [method],
+      y: [parseFloat(row.psnr_30k_train) || 0],
+      name: i === 0 ? 'Train' : '',
+      legendgroup: 'Train',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMap[method], line: barStyle.line},
+      offsetgroup: 'Train'
+    });
+    traces2.push({
+      x: [method],
+      y: [parseFloat(row.psnr_30k_test) || 0],
+      name: i === 0 ? 'Test' : '',
+      legendgroup: 'Test',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMapLight[method], line: barStyle.line},
+      offsetgroup: 'Test'
+    });
+  });
+
+  Plotly.newPlot('chart2', traces2, Object.assign({}, layout_base, {
+    title: {text: '(b) PSNR with Downsampling Factor 8: Train vs Test (30k)', font: {size: 14}, x: 0.5},
+    barmode: 'group',
+    xaxis: Object.assign({}, layout_base.xaxis, {}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
+    legend: Object.assign({}, layout_base.legend, {
+      traceorder: 'grouped'
+    })
+  }), plotConfig);
+
+  Plotly.newPlot('chart4', [{
+    x: uniqueMethods,
+    y: uniqueMethods.map(m => times[methods.findIndex(x => x === m)] / 60),
+    type: 'bar',
+    marker: Object.assign({color: uniqueMethods.map(m => colorMap[m])}, barStyle),
+    text: uniqueMethods.map(m => gpu[methods.findIndex(x => x === m)]),
+    textposition: 'outside',
+    textfont: {size: 9, color: getCurrentTheme() === 'dark' ? '#ccc' : '#333'}
+  }], Object.assign({}, layout_base, {
+    title: {text: '(c) Training Time with Downsampling Factor 8', font: {size: 14}, x: 0.5},
+    showlegend: false,
+    xaxis: Object.assign({}, layout_base.xaxis, {}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'Time (min)', font: {size: 12}}})
+  }), plotConfig);
+
+  var traces5 = uniqueMethods.map(method => {
+    var yVals = uniqueDownsampling.map(ds => {
+      var row = data.find(d => d.method === method && d.downsampling == ds);
+      return row ? parseFloat(row.psnr_30k_train) || null : null;
+    });
+    return {
+      x: uniqueDownsampling.map(d => '1/' + d),
+      y: yVals,
+      name: method,
+      type: 'bar',
+      hovertemplate: method + '<br>Factor: %{x}<br>PSNR: %{y:.2f} dB<extra></extra>',
+      marker: Object.assign({color: colorMap[method]}, barStyle)
+    };
+  });
+
+  Plotly.newPlot('chart5', traces5, Object.assign({}, layout_base, {
+    title: {text: '(d) PSNR vs Resolution (30k)', font: {size: 14}, x: 0.5},
+    barmode: 'group',
+    xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}})
+  }), plotConfig);
+
+  var traces6 = [];
+  
+  uniqueMethods.forEach((method, i) => {
+    traces6.push({
+      x: [null],
+      y: [null],
+      name: method,
+      legendgroup: method,
+      type: 'scatter',
+      mode: 'markers',
+      marker: {
+        color: colorMap[method],
+        symbol: 'circle',
+        size: 10,
+        line: {color: getCurrentTheme() === 'dark' ? '#666' : '#000', width: 1}
+      }
+    });
+  });
+  
+  uniqueDownsampling.forEach((ds, i) => {
+    traces6.push({
+      x: [null],
+      y: [null],
+      name: '1/' + ds,
+      legendgroup: 'factors',
+      type: 'scatter',
+      mode: 'markers',
+      marker: {
+        color: '#666',
+        symbol: markerShapes[ds] || 'circle',
+        size: 10,
+        line: {color: getCurrentTheme() === 'dark' ? '#666' : '#000', width: 1}
+      }
+    });
+  });
+  
+  uniqueMethods.forEach(method => {
+    uniqueDownsampling.forEach(ds => {
+      var methodData = data.filter(d => d.method === method && d.downsampling == ds);
+      if (methodData.length === 0) return;
+      traces6.push({
+        x: methodData.map(d => parseFloat(d.gs_number) || 0),
+        y: methodData.map(d => parseFloat(d.psnr_30k_train) || 0),
+        legendgroup: method,
+        showlegend: false,
+        hovertemplate: method + ' (1/' + ds + ')<br>GS: %{x:.3s}<br>PSNR: %{y:.2f} dB<extra></extra>',
+        type: 'scatter',
+        mode: 'markers',
+        marker: {
+          color: colorMap[method],
+          symbol: markerShapes[ds] || 'circle',
+          size: 10,
+          line: {color: getCurrentTheme() === 'dark' ? '#666' : '#000', width: 1}
+        }
+      });
+    });
+  });
+
+  Plotly.newPlot('chart6', traces6, Object.assign({}, layout_base, {
+    title: {text: '(e) GS Number vs PSNR (30k)', font: {size: 14}, x: 0.5},
+    xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}})
+  }), plotConfig);
+}
+
+
 Papa.parse(sheetUrl, {
   download: true,
   header: true,
+
   complete: function(results) {
     var data = results.data.filter(d => d.method);
 
@@ -75,183 +345,9 @@ Papa.parse(sheetUrl, {
 
     var methods = data.map(d => d.method);
     var gpu = data.map(d => d.gpu);
-    
     var times = data.map(d => parseHMS(d.times));
     
-    var psnr_7k_train = data.map(d => parseFloat(d.psnr_7k_train) || 0);
-    var psnr_7k_test = data.map(d => parseFloat(d.psnr_7k_test) || 0);
-    var psnr_30k_train = data.map(d => parseFloat(d.psnr_30k_train) || 0);
-    var psnr_30k_test = data.map(d => parseFloat(d.psnr_30k_test) || 0);
-
-    var barStyle = {
-      line: {color: '#000', width: 0.5}
-    };
-
-    var layout_base = {
-      font: {
-        family: 'Times New Roman, serif',
-        size: 14,
-        color: '#000'
-      },
-      paper_bgcolor: '#fff',
-      plot_bgcolor: '#fff',
-      margin: {t: 60, b: 80, l: 70, r: 100},
-      xaxis: {
-        showline: true,
-        linewidth: 1.5,
-        linecolor: '#000',
-        mirror: true,
-        ticks: 'outside',
-        tickwidth: 1,
-        tickcolor: '#000',
-        tickfont: {size: 11},
-        showgrid: false,
-        tickangle: -30
-      },
-      yaxis: {
-        showline: true,
-        linewidth: 1.5,
-        linecolor: '#000',
-        mirror: true,
-        ticks: 'outside',
-        tickwidth: 1,
-        tickcolor: '#000',
-        tickfont: {size: 11},
-        showgrid: true,
-        gridcolor: '#e0e0e0',
-        gridwidth: 0.5,
-        zeroline: false
-      },
-      legend: {
-        orientation: 'v',
-        yanchor: 'middle',
-        y: 0.5,
-        xanchor: 'left',
-        x: 1.02,
-        font: {size: 10},
-        bordercolor: '#ccc',
-        borderwidth: 1,
-        bgcolor: 'rgba(255,255,255,0.9)'
-      },
-      bargap: 0.2,
-      bargroupgap: 0.1
-    };
-
-    var plotConfig = {
-      displayModeBar: false
-    };
-
-    var traces1 = [];
-    
-    uniqueMethods.forEach((method, i) => {
-      var row = data.find(d => d.method === method && d.downsampling == 8);
-      if (!row) return;
-      traces1.push({
-        x: [method],
-        y: [parseFloat(row.psnr_7k_train) || 0],
-        name: i === 0 ? '7k' : '',
-        legendgroup: '7k',
-        showlegend: i === 0,
-        type: 'bar',
-        marker: {color: colorMapLight[method], line: barStyle.line},
-        offsetgroup: '7k'
-      });
-      traces1.push({
-        x: [method],
-        y: [parseFloat(row.psnr_30k_train) || 0],
-        name: i === 0 ? '30k' : '',
-        legendgroup: '30k',
-        showlegend: i === 0,
-        type: 'bar',
-        marker: {color: colorMap[method], line: barStyle.line},
-        offsetgroup: '30k'
-      });
-    });
-
-    Plotly.newPlot('chart1', traces1, Object.assign({}, layout_base, {
-      title: {text: '(a) Training PSNR with Downsampling Factor 8: 7k vs 30k', font: {size: 14}, x: 0.5},
-      barmode: 'group',
-      xaxis: Object.assign({}, layout_base.xaxis, {}),
-      yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
-      legend: Object.assign({}, layout_base.legend, {
-        traceorder: 'grouped'
-      })
-    }), plotConfig);
-
-    var traces2 = [];
-    
-    uniqueMethods.forEach((method, i) => {
-      var row = data.find(d => d.method === method && d.downsampling == 8);
-      traces2.push({
-        x: [method],
-        y: [parseFloat(row.psnr_30k_train) || 0],
-        name: i === 0 ? 'Train' : '',
-        legendgroup: 'Train',
-        showlegend: i === 0,
-        type: 'bar',
-        marker: {color: colorMap[method], line: barStyle.line},
-        offsetgroup: 'Train'
-      });
-      traces2.push({
-        x: [method],
-        y: [parseFloat(row.psnr_30k_test) || 0],
-        name: i === 0 ? 'Test' : '',
-        legendgroup: 'Test',
-        showlegend: i === 0,
-        type: 'bar',
-        marker: {color: colorMapLight[method], line: barStyle.line},
-        offsetgroup: 'Test'
-      });
-    });
-
-    Plotly.newPlot('chart2', traces2, Object.assign({}, layout_base, {
-      title: {text: '(b) PSNR with Downsampling Factor 8: Train vs Test (30k)', font: {size: 14}, x: 0.5},
-      barmode: 'group',
-      xaxis: Object.assign({}, layout_base.xaxis, {}),
-      yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
-      legend: Object.assign({}, layout_base.legend, {
-        traceorder: 'grouped'
-      })
-    }), plotConfig);
-
-    Plotly.newPlot('chart4', [{
-      x: uniqueMethods,
-      y: uniqueMethods.map(m => times[methods.findIndex(x => x === m)] / 60),
-      type: 'bar',
-      marker: Object.assign({color: uniqueMethods.map(m => colorMap[m])}, barStyle),
-      text: uniqueMethods.map(m => gpu[methods.findIndex(x => x === m)]),
-      textposition: 'outside',
-      textfont: {size: 9, color: '#333'}
-    }], Object.assign({}, layout_base, {
-      title: {text: '(c) Training Time with Downsampling Factor 8', font: {size: 14}, x: 0.5},
-      showlegend: false,
-      xaxis: Object.assign({}, layout_base.xaxis, {}),
-      yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'Time (min)', font: {size: 12}}})
-    }), plotConfig);
-
     var uniqueDownsampling = [...new Set(data.map(d => d.downsampling))].sort((a, b) => b - a);
-
-    var traces5 = uniqueMethods.map(method => {
-      var yVals = uniqueDownsampling.map(ds => {
-        var row = data.find(d => d.method === method && d.downsampling == ds);
-        return row ? parseFloat(row.psnr_30k_train) || null : null;
-      });
-      return {
-        x: uniqueDownsampling.map(d => '1/' + d),
-        y: yVals,
-        name: method,
-        type: 'bar',
-        hovertemplate: method + '<br>Factor: %{x}<br>PSNR: %{y:.2f} dB<extra></extra>',
-        marker: Object.assign({color: colorMap[method]}, barStyle)
-      };
-    });
-
-    Plotly.newPlot('chart5', traces5, Object.assign({}, layout_base, {
-      title: {text: '(d) PSNR vs Resolution (30k)', font: {size: 14}, x: 0.5},
-      barmode: 'group',
-      xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0}),
-      yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}})
-    }), plotConfig);
 
     var markerShapes = {
       '1': 'circle',
@@ -260,69 +356,37 @@ Papa.parse(sheetUrl, {
       '8': 'cross'
     };
 
-    var traces6 = [];
-    
-    uniqueMethods.forEach((method, i) => {
-      traces6.push({
-        x: [null],
-        y: [null],
-        name: method,
-        legendgroup: method,
-        type: 'scatter',
-        mode: 'markers',
-        marker: {
-          color: colorMap[method],
-          symbol: 'circle',
-          size: 10,
-          line: {color: '#000', width: 1}
-        }
-      });
-    });
-    
-    uniqueDownsampling.forEach((ds, i) => {
-      traces6.push({
-        x: [null],
-        y: [null],
-        name: '1/' + ds,
-        legendgroup: 'factors',
-        type: 'scatter',
-        mode: 'markers',
-        marker: {
-          color: '#666',
-          symbol: markerShapes[ds] || 'circle',
-          size: 10,
-          line: {color: '#000', width: 1}
-        }
-      });
-    });
-    
-    uniqueMethods.forEach(method => {
-      uniqueDownsampling.forEach(ds => {
-        var methodData = data.filter(d => d.method === method && d.downsampling == ds);
-        if (methodData.length === 0) return;
-        traces6.push({
-          x: methodData.map(d => parseFloat(d.gs_number) || 0),
-          y: methodData.map(d => parseFloat(d.psnr_30k_train) || 0),
-          legendgroup: method,
-          showlegend: false,
-          hovertemplate: method + ' (1/' + ds + ')<br>GS: %{x:.3s}<br>PSNR: %{y:.2f} dB<extra></extra>',
-          type: 'scatter',
-          mode: 'markers',
-          marker: {
-            color: colorMap[method],
-            symbol: markerShapes[ds] || 'circle',
-            size: 10,
-            line: {color: '#000', width: 1}
-          }
-        });
-      });
+    globalData = {
+      data: data,
+      uniqueMethods: uniqueMethods,
+      colorMap: colorMap,
+      colorMapLight: colorMapLight,
+      methods: methods,
+      gpu: gpu,
+      times: times,
+      uniqueDownsampling: uniqueDownsampling,
+      markerShapes: markerShapes
+    };
+
+    createAllCharts();
+
+    const observer = new MutationObserver(() => {
+      createAllCharts();
     });
 
-    Plotly.newPlot('chart6', traces6, Object.assign({}, layout_base, {
-      title: {text: '(e) GS Number vs PSNR (30k)', font: {size: 14}, x: 0.5},
-      xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0}),
-      yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}})
-    }), plotConfig);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme']
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme']
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      createAllCharts();
+    });
   }
 });
 </script>
