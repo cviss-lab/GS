@@ -13,6 +13,24 @@ redirect_from:
 
 This webpage provides a comprehensive performance benchmark for various Gaussian Splatting methods, including SAGA, GS, 2DGS, EAGLES, HAC, NerfStudio-Splatfacto, and more.
 
+## Dataset
+
+The performance benchmark datasets used for not is as follows:
+
+|Source|Scene|Scene Type|Data Type|
+|---|---|---|---|
+|Our Dataset|[Tower_0529](https://drive.google.com/drive/folders/1fhijwyJRplX8Qp4acy6EQCGbkES0AAvb?usp=drive_link)|Outdoor|Real-World|
+
+Other types of datasets planned in the future:
+- Scene Type
+  - Indoor (Room, Building Interior)
+  - Outdoor (Urban, Natural, Wild)
+  - Dynamic
+  - Object-Centric
+- Data Type
+  - Real-World
+  - Synthetic
+
 ## Metrics
 
 We use PSNR, SSIM, and LPIPS as image quality metrics, while also recording the number of Gaussians and training time to evaluate efficiency.
