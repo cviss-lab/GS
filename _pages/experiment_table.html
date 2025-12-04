@@ -101,6 +101,9 @@ redirect_from:
             html += '<tr>';
             cols.forEach(c => {
               let val = d[c] || '';
+              if (c === "method") {
+                val = `<a href="${d.link}" target="_blank">${val}</a>`;
+              } 
               if (siCols.includes(c) && val !== '') {
                 val = formatSI(val);
               } else if (decimalCols.includes(c) && val !== '') {

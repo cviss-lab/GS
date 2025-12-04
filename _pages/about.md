@@ -1,21 +1,20 @@
----
-permalink: /
-title: "Gaussian Splatting Performance Benchmark"
-author_profile: true
-redirect_from: 
-  - /about/
-  - /about.html
----
-
-## Overview
+# Gaussian Splatting Performance Benchmark
 
 <iframe id="viewer" width="800" height="500" allow="fullscreen; xr-spatial-tracking" src="https://superspl.at/s?id=e818cc56"></iframe>
+
+## Overview
 
 This webpage provides a comprehensive performance benchmark for various Gaussian Splatting methods, including SAGA, GS, 2DGS, EAGLES, HAC, NerfStudio-Splatfacto, and more.
 
 ## Metrics
 
 We use PSNR, SSIM, and LPIPS as image quality metrics, while also recording the number of Gaussians and training time to evaluate efficiency.
+
+Note that images at different resolutions are compared against their corresponding training images at the same downsampling factor:
+
+$$\text{Metric} = f(I_k, \widetilde{I}_k)$$
+
+where $k$ denotes the downsampling factor, $I_k$ and $\widetilde{I}_k$ is the corresponding ground truth and synthetic image at downsampling factor $k$. As a result, PSNR tends to decrease at higher resolutions (lower downsampling factors) due to the increased difficulty of reconstruction.
 
 ## Experimental Setup
 
@@ -36,10 +35,12 @@ This work is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/
 If you find this work helpful, please cite:
 
 ```bibtex
-@misc{li2025gsbenchmark,
+@misc{cviss2025gsbenchmark,
     author = {Li, Huibin},
     title = {Gaussian Splatting Performance Benchmark},
     year = {2025},
-    url = {https://cviss-lab.github.io/GS}
+    url = {https://cviss-lab.github.io/GS},
+    organization = {CVISS Lab},
+    note = {\url{https://cviss.net/}}
 }
 ```
