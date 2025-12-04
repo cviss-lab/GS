@@ -1,8 +1,15 @@
-# Gaussian Splatting Performance Benchmark
-
-<iframe id="viewer" width="800" height="500" allow="fullscreen; xr-spatial-tracking" src="https://superspl.at/s?id=e818cc56"></iframe>
+---
+permalink: /
+title: "Gaussian Splatting Performance Benchmark"
+author_profile: true
+redirect_from: 
+  - /about/
+  - /about.html
+---
 
 ## Overview
+
+<iframe id="viewer" width="800" height="500" allow="fullscreen; xr-spatial-tracking" src="https://superspl.at/s?id=e818cc56"></iframe>
 
 This webpage provides a comprehensive performance benchmark for various Gaussian Splatting methods, including SAGA, GS, 2DGS, EAGLES, HAC, NerfStudio-Splatfacto, and more.
 
