@@ -329,7 +329,12 @@ Papa.parse(sheetUrl, {
     var data = results.data.filter(d => d.method);
 
     var uniqueMethods = [...new Set(data.map(d => d.method))];
-    var palette = ['#4878d0', '#ee854a', '#6acc64', '#d65f5f', '#956cb4', '#8c613c', '#dc7ec0', '#797979', '#d5bb67', '#82c6e2'];
+    var palette = [
+      '#7a9fdc', '#f4a876', '#8fdb8a', '#e38888', '#b18fca', '#a9806a', '#e8a4d6', '#9a9a9a', '#e3d08f', '#a7dbee',
+      '#4878d0', '#ee854a', '#6acc64', '#d65f5f', '#956cb4', '#8c613c', '#dc7ec0', '#797979', '#d5bb67', '#82c6e2',
+      '#2e5aa8', '#d66b28', '#4ab345', '#c03a3a', '#7a4e9d', '#6f4623', '#ca5aa9', '#5a5a5a', '#c4a73f', '#5bb0d5',
+      '#1d4580', '#b5561a', '#359a2e', '#a02525', '#5f3880', '#543316', '#b03d91', '#3e3e3e', '#a88d25', '#3a95bf'
+    ];
     var colorMap = {};
     uniqueMethods.forEach((m, i) => colorMap[m] = palette[i % palette.length]);
 
