@@ -312,7 +312,7 @@ function createAllCharts() {
 
   Plotly.newPlot('chart6', traces6, Object.assign({}, layout_base, {
     title: {text: '(e) GS Number vs PSNR (30k)', font: {size: 14}, x: 0.5},
-    xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0}),
+    xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0, rangemode: 'tozero'}),
     yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
     legend: Object.assign({}, layout_base.legend, {
       tracegroupgap: 0
