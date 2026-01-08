@@ -206,6 +206,7 @@ const charty = (function() {
             result.data = data;
             result.gpu = data.map(d => d.gpu);
             result.times = data.map(d => parseHMS(d.times));
+            result.methods = data.map(d => d.method);
             result.train_render_times = data.map(d => parseHMS(d.train_render_times));
             result.train_optimal_times = data.map(d => parseHMS(d.train_optimal_times));
 

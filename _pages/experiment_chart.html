@@ -35,8 +35,8 @@ function createAllCharts() {
   
   var data = allset.data;
   var uniqueMethods = allset.uniqueMethods;
-  var colorMap = allset.colorMap;
-  var colorMapLight = allset.colorMapLight;
+  var colorMap = charty.dataManager.colorMap;
+  var colorMapLight = charty.dataManager.colorMapLight;
   var methods = allset.methods;
   var gpu = allset.gpu;
   var times = allset.times;
@@ -251,4 +251,4 @@ Papa.parse(charty.sheetsUrls.Ours, {
     });
   }
 });
-</script>`
+</script>
