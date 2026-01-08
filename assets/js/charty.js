@@ -11,6 +11,13 @@ const charty = (function() {
         '#1d4580', '#b5561a', '#359a2e', '#a02525', '#5f3880', '#543316', '#b03d91', '#3e3e3e', '#a88d25', '#3a95bf'
     ];
 
+    let markerShapes = {
+        '1': 'circle',
+        '2': 'square',
+        '4': 'diamond',
+        '8': 'cross'
+    };
+
     function getCurrentTheme() {
         const html = document.documentElement;
         const body = document.body;
@@ -108,6 +115,132 @@ const charty = (function() {
         }
         return parseFloat(val) || 0;
     }
+
+    function lightenColor(hex, factor) {
+        var r = parseInt(hex.slice(1, 3), 16);
+        var g = parseInt(hex.slice(3, 5), 16);
+        var b = parseInt(hex.slice(5, 7), 16);
+        r = Math.round(r + (255 - r) * factor);
+        g = Math.round(g + (255 - g) * factor);
+        b = Math.round(b + (255 - b) * factor);
+        return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+
+
+    const dataManager = {
+        // 原始数据
+        rawData: null,
+        
+        // 全局唯一值
+        uniqueScenes: null,
+        uniqueMethods: null,
+        uniqueDownsampling: null,
+        
+        // 颜色映射
+        colorMap: null,
+        colorMapLight: null,
+
+        // 初始化数据
+        init: function(rawData) {
+            this.rawData = rawData.filter(d => d.method);
+            this._processGlobalData();
+            return this;
+        },
+        
+        // 预处理全局数据
+        _processGlobalData: function() {
+            if (!this.rawData || this.rawData.length === 0) {
+                console.warn('No data to process');
+                return;
+            }
+            
+            // 提取所有唯一值
+            this.uniqueScenes = [...new Set(this.rawData.map(d => d.scene))].sort();
+            this.uniqueMethods = [...new Set(this.rawData.map(d => d.method))];
+            this.uniqueDownsampling = [...new Set(this.rawData.map(d => d.downsampling))].sort((a, b) => b - a);
+            
+            // 生成颜色映射
+            this.colorMap = {};
+            this.uniqueMethods.forEach((m, i) => {
+                this.colorMap[m] = palette[i % palette.length];
+            });
+            
+            // 生成浅色映射
+            this.colorMapLight = {};
+            this.uniqueMethods.forEach(m => {
+                this.colorMapLight[m] = lightenColor(this.colorMap[m], 0.5);
+            });
+        },
+        
+        // 获取特定 scene 的子集（核心方法）
+        subset: function(datasetName, sceneName) {
+            if (!this.rawData) {
+                console.error('Data not initialized. Call init() first.');
+                return null;
+            }
+            
+            result = {};
+            let data = null;
+            if (!sceneName || !datasetName) {
+                data = this.rawData;
+                result = {
+                    uniqueMethods: this.uniqueMethods,
+                    uniqueDownsampling: this.uniqueDownsampling
+                }
+            }else{
+                var subsetData = this.rawData.filter(d => d.scene === sceneName && d.dataset === datasetName);
+                
+                if (subsetData.length === 0) {
+                    console.warn(`No data found for scene: ${sceneName}`);
+                    return null;
+                }
+
+                var sceneMethods = [...new Set(subsetData.map(d => d.method))];
+                var sceneDownsampling = [...new Set(subsetData.map(d => d.downsampling))].sort((a, b) => b - a);
+                result = {
+                    uniqueMethods: sceneMethods,
+                    uniqueDownsampling: sceneDownsampling,
+                };
+                data = subsetData;
+            }
+            result.data = data;
+            result.gpu = data.map(d => d.gpu);
+            result.times = data.map(d => parseHMS(d.times));
+            result.train_render_times = data.map(d => parseHMS(d.train_render_times));
+            result.train_optimal_times = data.map(d => parseHMS(d.train_optimal_times));
+
+            return result;  
+        },
+        
+        // 获取所有 scenes
+        getScenes: function() {
+            return this.uniqueScenes || [];
+        },
+        
+        // 获取全局数据摘要
+        getSummary: function() {
+            return {
+                totalRows: this.rawData ? this.rawData.length : 0,
+                scenes: this.uniqueScenes,
+                methods: this.uniqueMethods,
+                downsamplingFactors: this.uniqueDownsampling
+            };
+        },
+        
+        // 获取特定 scene 和 method 的数据
+        getMethodData: function(sceneName, methodName) {
+            if (!this.rawData) return [];
+            return this.rawData.filter(d => 
+                d.scene === sceneName && d.method === methodName
+            );
+        },
+        
+        // 检查是否已初始化
+        isInitialized: function() {
+            return this.rawData !== null && this.rawData.length > 0;
+        }
+    };
+
     return {
         getThemedLayoutBase: getThemedLayoutBase,
         getThemedBarStyle: getThemedBarStyle,
@@ -115,7 +248,10 @@ const charty = (function() {
         formatTime: formatTime,
         parseHMS: parseHMS,
         sheetsUrls: sheetsUrls,
-        palette: palette
+        palette: palette,
+        markerShapes: markerShapes,
+        lightenColor: lightenColor,
+        dataManager: dataManager
     }
 })();
 
