@@ -10,43 +10,323 @@ author_profile: true
 <link rel="stylesheet" href="{{ base_path }}/assets/css/tags.css">
 <script src="https://cdn.plot.ly/plotly-3.3.0.min.js" charset="utf-8"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="{{ base_path }}/assets/js/charty.js"></script>
 <script src="{{ base_path }}/assets/js/tags.js"></script>
-这是页面的介绍内容。
 
+<ul id="scene-tabs" class="custom-tabs"></ul>
 
+<div id="scene-tabs-content" class="tab-content-wrapper"></div>
 
-<ul class="custom-tabs">
-  <li><a href="#tab1">研究方向</a></li>
-  <li><a href="#tab2">发表论文</a></li>
-  <li><a href="#tab3">项目经历</a></li>
-</ul>
+<script>
+const DATASET_NAME = 'Mip-NeRF360';
 
-<div class="tab-content-wrapper">
-  <div id="tab1" class="tab-content-item">
-    <h3>研究方向</h3>
-    <p>这里是研究方向的内容。</p>
-    <ul>
-      <li>3D Gaussian Splatting</li>
-      <li>Point Cloud Processing</li>
-      <li>Computer Vision</li>
-    </ul>
-  </div>
+function createSceneCharts(sceneName, containerPrefix) {
+  if (!charty.dataManager.isInitialized()) return;
+
+  var subset = charty.dataManager.subset(DATASET_NAME, sceneName);
   
-  <div id="tab2" class="tab-content-item">
-    <h3>发表论文</h3>
-    <p>这里是论文列表。</p>
-    <ol>
-      <li>Paper 1 - CVPR 2026</li>
-      <li>Paper 2 - ICCV 2025</li>
-    </ol>
-  </div>
+  if (!subset || !subset.data || subset.data.length === 0) {
+    console.warn(`No data for scene: ${sceneName}`);
+    return;
+  }
   
-  <div id="tab3" class="tab-content-item">
-    <h3>项目经历</h3>
-    <p>这里是项目经历。</p>
-    <ul>
-      <li>Project A - 2024</li>
-      <li>Project B - 2023</li>
-    </ul>
-  </div>
-</div>
+  var data = subset.data;
+  var uniqueMethods = subset.uniqueMethods;
+  var colorMap = charty.dataManager.colorMap;
+  var colorMapLight = charty.dataManager.colorMapLight;
+  var gpu = subset.gpu;
+  var times = subset.times;
+  var uniqueDownsampling = subset.uniqueDownsampling;
+  
+  var layout_base = charty.getThemedLayoutBase();
+  var barStyle = charty.getThemedBarStyle();
+  var plotConfig = {displayModeBar: false};
+
+  var traces1 = [];
+  uniqueMethods.forEach((method, i) => {
+    var row = data.find(d => d.method === method && d.downsampling == 8);
+    if (!row) return;
+    traces1.push({
+      x: [method],
+      y: [parseFloat(row.psnr_7k_train) || 0],
+      name: i === 0 ? '7k' : '',
+      legendgroup: '7k',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMapLight[method], line: barStyle.line},
+      offsetgroup: '7k'
+    });
+    traces1.push({
+      x: [method],
+      y: [parseFloat(row.psnr_30k_train) || 0],
+      name: i === 0 ? '30k' : '',
+      legendgroup: '30k',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMap[method], line: barStyle.line},
+      offsetgroup: '30k'
+    });
+  });
+
+  Plotly.newPlot(`${containerPrefix}-chart1`, traces1, Object.assign({}, layout_base, {
+    title: {text: `${sceneName} - Training PSNR: 7k vs 30k (DS=8)`, font: {size: 14}, x: 0.5},
+    barmode: 'group',
+    xaxis: Object.assign({}, layout_base.xaxis, {}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
+    legend: Object.assign({}, layout_base.legend, {traceorder: 'grouped'})
+  }), plotConfig);
+
+  var traces2 = [];
+  uniqueMethods.forEach((method, i) => {
+    var row = data.find(d => d.method === method && d.downsampling == 8);
+    if (!row) return;
+    traces2.push({
+      x: [method],
+      y: [parseFloat(row.psnr_30k_train) || 0],
+      name: i === 0 ? 'Train' : '',
+      legendgroup: 'Train',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMap[method], line: barStyle.line},
+      offsetgroup: 'Train'
+    });
+    traces2.push({
+      x: [method],
+      y: [parseFloat(row.psnr_30k_test) || 0],
+      name: i === 0 ? 'Test' : '',
+      legendgroup: 'Test',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMapLight[method], line: barStyle.line},
+      offsetgroup: 'Test'
+    });
+  });
+
+  Plotly.newPlot(`${containerPrefix}-chart2`, traces2, Object.assign({}, layout_base, {
+    title: {text: `${sceneName} - Train vs Test PSNR (30k, DS=8)`, font: {size: 14}, x: 0.5},
+    barmode: 'group',
+    xaxis: Object.assign({}, layout_base.xaxis, {}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
+    legend: Object.assign({}, layout_base.legend, {traceorder: 'grouped'})
+  }), plotConfig);
+
+  Plotly.newPlot(`${containerPrefix}-chart3`, [{
+    x: uniqueMethods,
+    y: uniqueMethods.map(m => {
+      var idx = data.findIndex(d => d.method === m && d.downsampling == 8);
+      return idx >= 0 ? times[idx] / 60 : 0;
+    }),
+    type: 'bar',
+    marker: Object.assign({color: uniqueMethods.map(m => colorMap[m])}, barStyle),
+    text: uniqueMethods.map(m => {
+      var idx = data.findIndex(d => d.method === m && d.downsampling == 8);
+      return idx >= 0 ? gpu[idx] : '';
+    }),
+    textposition: 'outside',
+    textfont: {size: 9, color: charty.getCurrentTheme() === 'dark' ? '#ccc' : '#333'}
+  }], Object.assign({}, layout_base, {
+    title: {text: `${sceneName} - Training Time (DS=8)`, font: {size: 14}, x: 0.5},
+    showlegend: false,
+    xaxis: Object.assign({}, layout_base.xaxis, {}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'Time (min)', font: {size: 12}}})
+  }), plotConfig);
+
+  var traces4 = uniqueMethods.map(method => {
+    var yVals = uniqueDownsampling.map(ds => {
+      var row = data.find(d => d.method === method && d.downsampling == ds);
+      return row ? parseFloat(row.psnr_30k_train) || null : null;
+    });
+    return {
+      x: uniqueDownsampling.map(d => '1/' + d),
+      y: yVals,
+      name: method,
+      type: 'bar',
+      hovertemplate: method + '<br>Factor: %{x}<br>PSNR: %{y:.2f} dB<extra></extra>',
+      marker: Object.assign({color: colorMap[method]}, barStyle)
+    };
+  });
+
+  Plotly.newPlot(`${containerPrefix}-chart4`, traces4, Object.assign({}, layout_base, {
+    title: {text: `${sceneName} - PSNR vs Resolution (30k)`, font: {size: 14}, x: 0.5},
+    barmode: 'group',
+    xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}})
+  }), plotConfig);
+
+  var traces5 = [];
+  
+  uniqueMethods.forEach((method, i) => {
+    traces5.push({
+      x: [null],
+      y: [null],
+      name: method,
+      legendgroup: method,
+      type: 'scatter',
+      mode: 'markers',
+      marker: {
+        color: colorMap[method],
+        symbol: 'circle',
+        size: 10,
+        line: {color: charty.getCurrentTheme() === 'dark' ? '#666' : '#000', width: 1}
+      }
+    });
+  });
+  
+  uniqueDownsampling.forEach((ds, i) => {
+    traces5.push({
+      x: [null],
+      y: [null],
+      name: '1/' + ds,
+      legendgroup: 'factors',
+      type: 'scatter',
+      mode: 'markers',
+      marker: {
+        color: '#666',
+        symbol: charty.markerShapes[ds] || 'circle',
+        size: 10,
+        line: {color: charty.getCurrentTheme() === 'dark' ? '#666' : '#000', width: 1}
+      }
+    });
+  });
+  
+  uniqueMethods.forEach(method => {
+    uniqueDownsampling.forEach(ds => {
+      var methodData = data.filter(d => d.method === method && d.downsampling == ds);
+      if (methodData.length === 0) return;
+      traces5.push({
+        x: methodData.map(d => parseFloat(d.gs_number) || 0),
+        y: methodData.map(d => parseFloat(d.psnr_30k_train) || 0),
+        legendgroup: method,
+        showlegend: false,
+        hovertemplate: method + ' (1/' + ds + ')<br>GS: %{x:.3s}<br>PSNR: %{y:.2f} dB<extra></extra>',
+        type: 'scatter',
+        mode: 'markers',
+        marker: {
+          color: colorMap[method],
+          symbol: charty.markerShapes[ds] || 'circle',
+          size: 10,
+          line: {color: charty.getCurrentTheme() === 'dark' ? '#666' : '#000', width: 1}
+        }
+      });
+    });
+  });
+
+  Plotly.newPlot(`${containerPrefix}-chart5`, traces5, Object.assign({}, layout_base, {
+    title: {text: `${sceneName} - GS Number vs PSNR (30k)`, font: {size: 14}, x: 0.5},
+    xaxis: Object.assign({}, layout_base.xaxis, {tickangle: 0, rangemode: 'tozero'}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
+    legend: Object.assign({}, layout_base.legend, {tracegroupgap: 0})
+  }), plotConfig);
+
+  var traces6 = [];
+  uniqueMethods.forEach((method, i) => {
+    var row = data.find(d => d.method === method && d.downsampling == 8);
+    if (!row) return;
+    traces6.push({
+      x: [method],
+      y: [parseFloat(row.train_render_times) / 60 || 0],
+      name: i === 0 ? 'Render' : '',
+      legendgroup: 'Render',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMapLight[method], line: barStyle.line},
+      offsetgroup: 'Render'
+    });
+    traces6.push({
+      x: [method],
+      y: [parseFloat(row.train_optimal_times) / 60 || 0],
+      name: i === 0 ? 'Optimize' : '',
+      legendgroup: 'Optimize',
+      showlegend: i === 0,
+      type: 'bar',
+      marker: {color: colorMap[method], line: barStyle.line},
+      offsetgroup: 'Optimize'
+    });
+  });
+
+  Plotly.newPlot(`${containerPrefix}-chart6`, traces6, Object.assign({}, layout_base, {
+    title: {text: `${sceneName} - Training Time Breakdown (DS=8)`, font: {size: 14}, x: 0.5},
+    barmode: 'group',
+    xaxis: Object.assign({}, layout_base.xaxis, {}),
+    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'Time (min)', font: {size: 12}}}),
+    legend: Object.assign({}, layout_base.legend, {traceorder: 'grouped'})
+  }), plotConfig);
+}
+
+function createAllSceneTabs() {
+  if (!charty.dataManager.isInitialized()) return;
+
+  var scenes = charty.dataManager.getScenes();
+  
+  if (!scenes || scenes.length === 0) {
+    console.warn('No scenes found');
+    return;
+  }
+
+  var tabsContainer = document.getElementById('scene-tabs');
+  tabsContainer.innerHTML = '';
+  
+  scenes.forEach((scene, index) => {
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = `#scene-${scene}`;
+    a.textContent = scene;
+    if (index === 0) a.classList.add('active');
+    li.appendChild(a);
+    tabsContainer.appendChild(li);
+  });
+
+  var contentContainer = document.getElementById('scene-tabs-content');
+  contentContainer.innerHTML = '';
+  
+  scenes.forEach((scene, index) => {
+    var tabDiv = document.createElement('div');
+    tabDiv.id = `scene-${scene}`;
+    tabDiv.className = 'tab-content-item';
+    if (index === 0) tabDiv.classList.add('active');
+    
+    tabDiv.innerHTML = `
+      <h3>${scene}</h3>
+      <div id="scene-${scene}-chart1" class="chart"></div>
+      <div id="scene-${scene}-chart2" class="chart"></div>
+      <div id="scene-${scene}-chart3" class="chart"></div>
+      <div id="scene-${scene}-chart4" class="chart"></div>
+      <div id="scene-${scene}-chart5" class="chart"></div>
+      <div id="scene-${scene}-chart6" class="chart"></div>
+    `;
+    
+    contentContainer.appendChild(tabDiv);
+  });
+  
+  scenes.forEach(scene => {
+    createSceneCharts(scene, `scene-${scene}`);
+  });
+}
+
+Papa.parse(charty.sheetsUrls.MipNerf360, {
+  download: true,
+  header: true,
+  complete: function(results) {
+    charty.dataManager.init(results.data);
+    createAllSceneTabs();
+
+    const observer = new MutationObserver(() => {
+      createAllSceneTabs();
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme']
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme']
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      createAllSceneTabs();
+    });
+  }
+});
+</script>
