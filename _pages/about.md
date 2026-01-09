@@ -9,7 +9,7 @@ redirect_from:
 
 ## Overview
 
-<iframe id="viewer" width="800" height="500" allow="fullscreen; xr-spatial-tracking" src="https://superspl.at/s?id=e818cc56"></iframe>
+<iframe id="viewer" width="100%" height="500" allow="fullscreen; xr-spatial-tracking" src="https://superspl.at/s?id=e818cc56"></iframe>
 
 This webpage provides a comprehensive performance benchmark for various Gaussian Splatting methods, including SAGA, GS, 2DGS, EAGLES, HAC, NerfStudio-Splatfacto, and more.
 
@@ -17,9 +17,10 @@ This webpage provides a comprehensive performance benchmark for various Gaussian
 
 The performance benchmark datasets used for not is as follows:
 
-|Source|Scene|Scene Type|Data Type|
+|Dataset|Link|Scene Type|Data Type|
 |---|---|---|---|
 |Our Dataset|[Tower_0529](https://drive.google.com/drive/folders/1fhijwyJRplX8Qp4acy6EQCGbkES0AAvb?usp=drive_link)|Outdoor|Real-World|
+|MipNeRF360|[MipNeRF360](https://jonbarron.info/mipnerf360/)|Mixed|Real-World|
 
 Other types of datasets planned in the future:
 - Scene Type
@@ -40,6 +41,8 @@ Note that images at different resolutions are compared against their correspondi
 $$\text{Metric} = f(I_k, \widetilde{I}_k)$$
 
 where $k$ denotes the downsampling factor, $I_k$ and $\widetilde{I}_k$ is the corresponding ground truth and synthetic image at downsampling factor $k$. As a result, PSNR tends to decrease at higher resolutions (lower downsampling factors) due to the increased difficulty of reconstruction.
+
+> Notes: For GSplat, we use the code it provides to evaluate the Gaussian splatting results, which uses `torchmetrics` to compute PSNR, LPIPS, and SSIM, rather than `lpipsPyTorch`. For consistency with other methods, we also use the `vgg` model in `torchmetrics` to compute LPIPS.
 
 ## Experimental Setup
 
