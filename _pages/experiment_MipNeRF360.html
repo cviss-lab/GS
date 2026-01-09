@@ -11,7 +11,6 @@ author_profile: true
 <script src="https://cdn.plot.ly/plotly-3.3.0.min.js" charset="utf-8"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="{{ base_path }}/assets/js/charty.js"></script>
-<script src="{{ base_path }}/assets/js/tags.js"></script>
 
 <ul id="scene-tabs" class="custom-tabs"></ul>
 
@@ -217,40 +216,6 @@ function createSceneCharts(sceneName, containerPrefix) {
     yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'PSNR (dB)', font: {size: 12}}}),
     legend: Object.assign({}, layout_base.legend, {tracegroupgap: 0})
   }), plotConfig);
-
-  var traces6 = [];
-  uniqueMethods.forEach((method, i) => {
-    var row = data.find(d => d.method === method && d.downsampling == 8);
-    if (!row) return;
-    traces6.push({
-      x: [method],
-      y: [parseFloat(row.train_render_times) / 60 || 0],
-      name: i === 0 ? 'Render' : '',
-      legendgroup: 'Render',
-      showlegend: i === 0,
-      type: 'bar',
-      marker: {color: colorMapLight[method], line: barStyle.line},
-      offsetgroup: 'Render'
-    });
-    traces6.push({
-      x: [method],
-      y: [parseFloat(row.train_optimal_times) / 60 || 0],
-      name: i === 0 ? 'Optimize' : '',
-      legendgroup: 'Optimize',
-      showlegend: i === 0,
-      type: 'bar',
-      marker: {color: colorMap[method], line: barStyle.line},
-      offsetgroup: 'Optimize'
-    });
-  });
-
-  Plotly.newPlot(`${containerPrefix}-chart6`, traces6, Object.assign({}, layout_base, {
-    title: {text: `${sceneName} - Training Time Breakdown (DS=8)`, font: {size: 14}, x: 0.5},
-    barmode: 'group',
-    xaxis: Object.assign({}, layout_base.xaxis, {}),
-    yaxis: Object.assign({}, layout_base.yaxis, {title: {text: 'Time (min)', font: {size: 12}}}),
-    legend: Object.assign({}, layout_base.legend, {traceorder: 'grouped'})
-  }), plotConfig);
 }
 
 function createAllSceneTabs() {
@@ -269,8 +234,9 @@ function createAllSceneTabs() {
   scenes.forEach((scene, index) => {
     var li = document.createElement('li');
     var a = document.createElement('a');
-    a.href = `#scene-${scene}`;
-    a.textContent = scene;
+    var sceneId = scene.replace(/\//g, '-');
+    a.href = `#scene-${sceneId}`;
+    a.textContent = scene.split('/').pop();
     if (index === 0) a.classList.add('active');
     li.appendChild(a);
     tabsContainer.appendChild(li);
@@ -281,25 +247,39 @@ function createAllSceneTabs() {
   
   scenes.forEach((scene, index) => {
     var tabDiv = document.createElement('div');
-    tabDiv.id = `scene-${scene}`;
+    var sceneId = scene.replace(/\//g, '-');
+    tabDiv.id = `scene-${sceneId}`;
     tabDiv.className = 'tab-content-item';
     if (index === 0) tabDiv.classList.add('active');
     
     tabDiv.innerHTML = `
       <h3>${scene}</h3>
-      <div id="scene-${scene}-chart1" class="chart"></div>
-      <div id="scene-${scene}-chart2" class="chart"></div>
-      <div id="scene-${scene}-chart3" class="chart"></div>
-      <div id="scene-${scene}-chart4" class="chart"></div>
-      <div id="scene-${scene}-chart5" class="chart"></div>
-      <div id="scene-${scene}-chart6" class="chart"></div>
+      <div id="scene-${sceneId}-chart1" class="chart"></div>
+      <div id="scene-${sceneId}-chart2" class="chart"></div>
+      <div id="scene-${sceneId}-chart3" class="chart"></div>
+      <div id="scene-${sceneId}-chart4" class="chart"></div>
+      <div id="scene-${sceneId}-chart5" class="chart"></div>
     `;
     
     contentContainer.appendChild(tabDiv);
   });
+
+  document.querySelectorAll('.custom-tabs a').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      var tab_id = this.getAttribute('href');
+      
+      document.querySelectorAll('.custom-tabs a').forEach(a => a.classList.remove('active'));
+      document.querySelectorAll('.tab-content-item').forEach(item => item.classList.remove('active'));
+    
+      this.classList.add('active');
+      document.querySelector(tab_id).classList.add('active');
+    });
+  });
   
   scenes.forEach(scene => {
-    createSceneCharts(scene, `scene-${scene}`);
+    var sceneId = scene.replace(/\//g, '-');
+    createSceneCharts(scene, `scene-${sceneId}`);
   });
 }
 
@@ -307,7 +287,7 @@ Papa.parse(charty.sheetsUrls.MipNerf360, {
   download: true,
   header: true,
   complete: function(results) {
-    charty.dataManager.init(results.data);
+    charty.dataManager.init(results.data, DATASET_NAME);
     createAllSceneTabs();
 
     const observer = new MutationObserver(() => {

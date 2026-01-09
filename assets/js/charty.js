@@ -141,8 +141,10 @@ const charty = (function() {
         colorMapLight: null,
 
         // 初始化数据
-        init: function(rawData) {
+        init: function(rawData, datasetName) {
             this.rawData = rawData.filter(d => d.method);
+            if (datasetName)
+                this.rawData = this.rawData.filter(d => d.dataset === datasetName);
             this._processGlobalData();
             return this;
         },
