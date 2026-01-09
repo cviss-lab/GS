@@ -33,3 +33,5 @@ main:
     url: /experiment-table/
   - title: "Experiment Chart"
     url: /experiment-chart/
+  - title: "MipNeRF360"
+    url: /experiment-chart-MipNeRF360/
