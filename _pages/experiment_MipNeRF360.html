@@ -253,9 +253,11 @@ function createAllSceneTabs() {
     tabDiv.className = 'tab-content-item';
     tabDiv.setAttribute('data-rendered', 'false');
     if (index === 0) tabDiv.classList.add('active');
+    var best_result = charty.dataManager.getBestMethod(DATASET_NAME, scene);
     
     tabDiv.innerHTML = `
       <h3>${scene}</h3>
+      ${best_result ? `<iframe id="viewer-${sceneId}" width="100%" height="500" allow="fullscreen; xr-spatial-tracking" src="${best_result}"></iframe>` : ''}
       <div id="scene-${sceneId}-chart1" class="chart"></div>
       <div id="scene-${sceneId}-chart2" class="chart"></div>
       <div id="scene-${sceneId}-chart3" class="chart"></div>

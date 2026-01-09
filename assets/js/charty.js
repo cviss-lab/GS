@@ -241,6 +241,36 @@ const charty = (function() {
         // 检查是否已初始化
         isInitialized: function() {
             return this.rawData !== null && this.rawData.length > 0;
+        },
+
+        getBestMethod: function(datasetName, sceneName) {
+            if (!this.rawData) {
+                console.error('Data not initialized. Call init() first.');
+                return null;
+            }
+            
+            // 筛选指定 dataset 和 scene，且包含 result 列的数据
+            const filteredData = this.rawData.filter(d => 
+                d.dataset === datasetName && 
+                d.scene === sceneName && 
+                d.result !== undefined && 
+                d.result !== null && 
+                d.result !== ''
+            );
+            
+            if (filteredData.length === 0) {
+                console.warn(`No data with result found for dataset: ${datasetName}, scene: ${sceneName}`);
+                return null;
+            }
+            
+            // 按 psnr_30k_train 降序排序，取 top1
+            const sorted = filteredData.sort((a, b) => {
+                const psnrA = parseFloat(a.psnr_30k_train) || 0;
+                const psnrB = parseFloat(b.psnr_30k_train) || 0;
+                return psnrB - psnrA;
+            });
+            
+            return sorted[0].result;
         }
     };
 
@@ -254,7 +284,7 @@ const charty = (function() {
         palette: palette,
         markerShapes: markerShapes,
         lightenColor: lightenColor,
-        dataManager: dataManager
+        dataManager: dataManager,
     }
 })();
 
