@@ -31,7 +31,7 @@ main:
     
   - title: "Experiment Report"
     url: /experiment-table/
-  - title: "Experiment Chart"
+  - title: "Ours Tower"
     url: /experiment-chart/
   - title: "MipNeRF360"
     url: /experiment-chart-MipNeRF360/
